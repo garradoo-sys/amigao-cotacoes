@@ -2,23 +2,69 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Login - Amigão Peças</title>
+<title>COTAÇÃO DE PEÇAS - AMIGÃO PEÇAS E SERVIÇOS LTDA.</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    /* Estilo para o corpo da página (imagem de fundo e layout) */
+    body {
+        /* Define a imagem de fundo. Substitua 'url_da_sua_imagem.jpg' pelo caminho real da imagem. */
+        background-image: url('url_da_sua_imagem.jpg'); 
+        
+        /* Garante que a imagem cubra toda a tela, mantendo a proporção */
+        background-size: cover; 
+        
+        /* Fixa a imagem para que ela não role com o conteúdo */
+        background-attachment: fixed; 
+        
+        /* Centraliza o conteúdo (o formulário de login) na página */
+        display: flex;
+        justify-content: center; /* Alinha horizontalmente ao centro */
+        align-items: center;     /* Alinha verticalmente ao centro */
+        height: 100vh;           /* Define a altura total da viewport */
+        margin: 0;               /* Remove margens padrão do body */
+    }
+
+    /* Estilo para o 'card' de login (container do formulário) */
+    .login-container {
+        /* Adiciona um fundo semi-transparente para melhor leitura do texto */
+        background-color: rgba(255, 255, 255, 0.9); 
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        text-align: center; /* Centraliza o texto e inputs dentro do container */
+        width: 300px;
+    }
+
+    /* Estilo para os inputs para que ocupem a largura total do container */
+    input[type="email"],
+    input[type="password"],
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
+    }
+</style>
 </head>
 
 <body>
 
-<h2>Login - Amigão Peças</h2>
+<!-- Envolvemos o conteúdo existente em um novo div para estilização -->
+<div class="login-container">
+    <h2>COTAÇÃO - AMIGÃO PEÇAS E SERVIÇOS LTDA.</h2>
 
-<input type="email" id="email" placeholder="Email"><br><br>
-<input type="password" id="senha" placeholder="Senha"><br><br>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="senha" placeholder="Senha"><br><br>
 
-<button onclick="login()">Entrar</button>
+    <button onclick="login()">Entrar</button>
+</div>
 
-<!-- Firebase (modo compatível) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Firebase (modo compatível) e Scripts -->
+<script src="www.gstatic.com"></script>
+<script src="www.gstatic.com"></script>
+<script src="www.gstatic.com"></script>
 
 <!-- Configuração do Firebase -->
 <script src="firebase.js"></script>
