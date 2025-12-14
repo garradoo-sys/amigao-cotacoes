@@ -4,69 +4,90 @@
 <meta charset="UTF-8">
 <title>COTAÇÃO DE PEÇAS - AMIGÃO PEÇAS E SERVIÇOS LTDA.</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-    /* Estilo para o corpo da página (imagem de fundo e layout) */
-    body {
-        /* Define a imagem de fundo. Substitua 'url_da_sua_imagem.jpg' pelo caminho real da imagem. */
-        background-image: url("https://raw.githubusercontent.com/garradoo-sys/amigao-cotacoes/main/IMG_9802.jpeg"); 
-        
-        /* Garante que a imagem cubra toda a tela, mantendo a proporção */
-        background-size: cover; 
-        
-        /* Fixa a imagem para que ela não role com o conteúdo */
-        background-attachment: fixed; 
-        
-        /* Centraliza o conteúdo (o formulário de login) na página */
-        display: flex;
-        justify-content: center; /* Alinha horizontalmente ao centro */
-        align-items: center;     /* Alinha verticalmente ao centro */
-        height: 100vh;           /* Define a altura total da viewport */
-        margin: 0;               /* Remove margens padrão do body */
-    }
+body {
+    background-image: url("https://raw.githubusercontent.com/garradoo-sys/amigao-cotacoes/main/IMG_9802.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 
-    /* Estilo para o 'card' de login (container do formulário) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Card de login */
+.login-container {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    text-align: center;
+    width: 320px;
+}
+
+.login-container h2 {
+    margin-bottom: 25px;
+    font-size: 18px;
+}
+
+/* Inputs e botão */
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #c62828;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #b71c1c;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
     .login-container {
-        /* Adiciona um fundo semi-transparente para melhor leitura do texto */
-        background-color: rgba(255, 255, 255, 0.9); 
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        text-align: center; /* Centraliza o texto e inputs dentro do container */
-        width: 300px;
+        width: 90%;
+        padding: 30px;
     }
-
-    /* Estilo para os inputs para que ocupem a largura total do container */
-    input[type="email"],
-    input[type="password"],
-    button {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
-    }
+}
 </style>
 </head>
 
 <body>
 
-<!-- Envolvemos o conteúdo existente em um novo div para estilização -->
 <div class="login-container">
-    <h2>COTAÇÃO - AMIGÃO PEÇAS E SERVIÇOS LTDA.</h2>
+    <h2>COTAÇÃO AMIGÃO PEÇAS</h2>
 
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="senha" placeholder="Senha"><br><br>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="senha" placeholder="Senha">
 
     <button onclick="login()">Entrar</button>
 </div>
 
-<!-- Firebase (modo compatível) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Configuração do Firebase -->
 <script src="firebase.js"></script>
 
 <script>
