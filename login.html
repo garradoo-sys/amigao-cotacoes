@@ -2,56 +2,23 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>COTAÇÃO DE PEÇAS - AMIGÃO PEÇAS E SERVIÇOS LTDA.</title>
+<title>COTAÇÃO - AMIGÃO PEÇAS E SERVIÇOS LTDA.</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-    /* ... (seu CSS existente aqui) ... */
-    body {
-        background-image: url('url_da_sua_imagem.jpg'); 
-        background-size: cover; 
-        background-attachment: fixed; 
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-    }
-    .login-container {
-        background-color: rgba(255, 255, 255, 0.9); 
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        width: 300px;
-    }
-    input[type="email"],
-    input[type="password"],
-    button {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        box-sizing: border-box;
-    }
-</style>
 </head>
 
 <body>
 
-<div class="login-container">
-    <h2>COTAÇÃO - AMIGÃO PEÇAS E SERVIÇOS LTDA.</h2>
+<h2>Login - Amigão Peças</h2>
 
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="senha" placeholder="Senha"><br><br>
+<input type="email" id="email" placeholder="Email"><br><br>
+<input type="password" id="senha" placeholder="Senha"><br><br>
 
-    <button onclick="login()">Entrar</button>
-</div>
+<button onclick="login()">Entrar</button>
 
-<!-- Firebase (modo compatível) - CORRIGIDO -->
-<script src="www.gstatic.com"></script>
-<script src="www.gstatic.com"></script>
-<script src="www.gstatic.com"></script>
+<!-- Firebase (modo compatível) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <!-- Configuração do Firebase -->
 <script src="firebase.js"></script>
@@ -61,10 +28,9 @@ function login() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
-  // Assume que 'auth' está definido corretamente em firebase.js
   auth.signInWithEmailAndPassword(email, senha)
     .then(() => {
-      window.location.href = "index.html"; // Redireciona para index.html
+      window.location.href = "index.html";
     })
     .catch(err => alert("Erro no login: " + err.message));
 }
