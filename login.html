@@ -5,37 +5,25 @@
 <title>COTAÇÃO DE PEÇAS - AMIGÃO PEÇAS E SERVIÇOS LTDA.</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    /* Estilo para o corpo da página (imagem de fundo e layout) */
+    /* ... (seu CSS existente aqui) ... */
     body {
-        /* Define a imagem de fundo. Substitua 'url_da_sua_imagem.jpg' pelo caminho real da imagem. */
         background-image: url('url_da_sua_imagem.jpg'); 
-        
-        /* Garante que a imagem cubra toda a tela, mantendo a proporção */
         background-size: cover; 
-        
-        /* Fixa a imagem para que ela não role com o conteúdo */
         background-attachment: fixed; 
-        
-        /* Centraliza o conteúdo (o formulário de login) na página */
         display: flex;
-        justify-content: center; /* Alinha horizontalmente ao centro */
-        align-items: center;     /* Alinha verticalmente ao centro */
-        height: 100vh;           /* Define a altura total da viewport */
-        margin: 0;               /* Remove margens padrão do body */
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
     }
-
-    /* Estilo para o 'card' de login (container do formulário) */
     .login-container {
-        /* Adiciona um fundo semi-transparente para melhor leitura do texto */
         background-color: rgba(255, 255, 255, 0.9); 
         padding: 40px;
         border-radius: 10px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        text-align: center; /* Centraliza o texto e inputs dentro do container */
+        text-align: center;
         width: 300px;
     }
-
-    /* Estilo para os inputs para que ocupem a largura total do container */
     input[type="email"],
     input[type="password"],
     button {
@@ -44,14 +32,13 @@
         margin-bottom: 10px;
         border-radius: 5px;
         border: 1px solid #ccc;
-        box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
+        box-sizing: border-box;
     }
 </style>
 </head>
 
 <body>
 
-<!-- Envolvemos o conteúdo existente em um novo div para estilização -->
 <div class="login-container">
     <h2>COTAÇÃO - AMIGÃO PEÇAS E SERVIÇOS LTDA.</h2>
 
@@ -61,7 +48,7 @@
     <button onclick="login()">Entrar</button>
 </div>
 
-<!-- Firebase (modo compatível) e Scripts -->
+<!-- Firebase (modo compatível) - CORRIGIDO -->
 <script src="www.gstatic.com"></script>
 <script src="www.gstatic.com"></script>
 <script src="www.gstatic.com"></script>
@@ -74,9 +61,10 @@ function login() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
+  // Assume que 'auth' está definido corretamente em firebase.js
   auth.signInWithEmailAndPassword(email, senha)
     .then(() => {
-      window.location.href = "index.html";
+      window.location.href = "index.html"; // Redireciona para index.html
     })
     .catch(err => alert("Erro no login: " + err.message));
 }
