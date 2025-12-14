@@ -19,6 +19,17 @@ body {
     height: 100vh;
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+
+    position: relative;
+}
+
+/* Camada escura para não atrapalhar a fachada */
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45); /* controla o escurecimento */
+    z-index: 1;
 }
 
 /* Card de login */
@@ -26,9 +37,12 @@ body {
     background-color: rgba(255, 255, 255, 0.95);
     padding: 40px;
     border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     text-align: center;
     width: 320px;
+
+    position: relative;
+    z-index: 2; /* fica acima da imagem */
 }
 
 .login-container h2 {
