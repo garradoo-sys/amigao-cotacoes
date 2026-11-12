@@ -313,7 +313,7 @@ function generatePDF() {
     doc.text("Validade da cotação: 7 dias | Obrigado pela preferência.", 40, footerY);
 
     // Salvar PDF - o nome inclui o número da cotação
-    doc.save(`${cotNum}_cotacao.pdf`);
+    previewPDF(doc, `${cotNum}_cotacao.pdf`);
 
     // A emissão de PDF não altera o número da cotação.
 }
@@ -389,9 +389,22 @@ function generatePDFOficina() {
     doc.text("Markup efetivo sobre custo: "+pct(markupTotal)+"     Margem bruta sobre venda: "+pct(margemTotal),32,y);y+=17;
     const obs=document.getElementById("obs").value.trim();
     if(obs) {doc.setFontSize(9);const linhas=doc.splitTextToSize("Observações: "+obs,750);if(y+linhas.length*12>h-35){doc.addPage();y=40;}doc.text(linhas,32,y);}
-    doc.save(cotNum+"_oficina_interno.pdf");
+    previewPDF(doc, cotNum+"_oficina_interno.pdf");
 }
 
+function previewPDF(doc,filename) {
+ const url=URL.createObjectURL(doc.output("blob"));
+ const overlay=document.createElement("div");
+ overlay.style.cssText="position:fixed;inset:0;z-index:9999;background:#222d;display:flex;flex-direction:column;padding:12px;gap:8px";
+ const bar=document.createElement("div");
+ bar.style.cssText="background:white;padding:10px;display:flex;gap:12px;align-items:center;border-radius:6px";
+ const title=document.createElement("strong");title.textContent="Visualização: "+filename;title.style.flex="1";
+ const download=document.createElement("button");download.textContent="Baixar PDF";download.onclick=()=>doc.save(filename);
+ const close=document.createElement("button");close.textContent="Fechar / Editar";
+ const frame=document.createElement("iframe");frame.title="Pré-visualização do PDF";frame.style.cssText="flex:1;width:100%;border:0;background:white";frame.src=url;
+ close.onclick=()=>{overlay.remove();URL.revokeObjectURL(url);};
+ bar.append(title,download,close);overlay.append(bar,frame);document.body.append(overlay);
+}
 /* ----------------------------
    Enviar mensagem via WhatsApp (inclui observação e descontos em %)
    ---------------------------- */
