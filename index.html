@@ -103,8 +103,11 @@
     <button class="pdf" style="background:#263238" onclick="generatePDFOficina()">Gerar PDF Oficina</button>
     <button class="whatsapp" onclick="sendWhatsApp()">Enviar WhatsApp</button>
     <button class="save" onclick="salvarCotacao()">Salvar Cotação</button>
+    <button onclick="novaCotacao()">Nova Cotação</button>
+    <button onclick="mostrarHistorico()">Histórico / Editar</button>
 </div>
 
+<section id="historicoPanel" style="display:none;margin-top:18px;padding:16px;border:1px solid #ccc;border-radius:8px"><h2>Histórico de cotações</h2><input id="buscaCotacao" type="text" placeholder="Pesquisar por número, cliente, veículo ou placa" oninput="renderHistorico()" style="max-width:600px"><div id="listaHistorico"></div></section>
 <div class="total">
     Total: R$ <span id="totalValue">0,00</span>
 </div>
@@ -311,9 +314,7 @@ function generatePDF() {
     // Salvar PDF - o nome inclui o número da cotação
     doc.save(`${cotNum}_cotacao.pdf`);
 
-    // Atualiza sequência para próxima cotação
-    localStorage.setItem("amigao_current_cot", getNextCotacaoNumber());
-    updateMetaDisplay();
+    // A emissão de PDF não altera o número da cotação.
 }
 
 
@@ -427,40 +428,93 @@ function sendWhatsApp() {
    SALVAR COTAÇÃO LOCAL (exemplo simples)
    - Esta função salva uma cópia no localStorage (pode ser adaptada para enviar a um PHP / API)
    ---------------------------- */
-function salvarCotacao() {
-    const items = [];
-    document.querySelectorAll("#quotationTable tbody tr").forEach(row => {
-        items.push({
-            descricao: row.querySelector(".desc").value || "",
-            fornecedor: row.querySelector(".forn").value || "",
-            quantidade: row.querySelector(".quantity").value || 0,
-            custo: row.querySelector(".cost").value || 0,
-            precoVenda: row.querySelector(".price").value || 0,
-            percVenda: row.querySelector(".percent").value || 0,
-            percDesconto: row.querySelector(".discount").value || 0
-        });
-    });
 
-    const record = {
-        numero: localStorage.getItem("amigao_current_cot") || getNextCotacaoNumber(),
-        data: new Date().toISOString(),
-        cliente: document.getElementById("cliente").value || "",
-        veiculo: document.getElementById("veiculo").value || "",
-        placa: document.getElementById("placa").value || "",
-        observacao: document.getElementById("obs").value || "",
-        total: document.getElementById("totalValue").textContent || "0.00",
-        itens: items
-    };
-
-    // Salva array de cotacoes em localStorage (exemplo simples)
-    const key = "amigao_cotacoes_hist";
-    const arr = JSON.parse(localStorage.getItem(key) || "[]");
-    arr.unshift(record);
-    localStorage.setItem(key, JSON.stringify(arr));
-
-    alert("Cotação salva localmente no histórico do navegador.");
+const HIST_KEY = "amigao_cotacoes_hist";
+function lerHistorico() {
+    try { const arr=JSON.parse(localStorage.getItem(HIST_KEY)||"[]");return Array.isArray(arr)?arr:[]; }
+    catch(e) { alert("Não foi possível ler o histórico salvo.");return []; }
 }
-
+function coletarCotacao() {
+    return {
+        numero:localStorage.getItem("amigao_current_cot") || getNextCotacaoNumber(),
+        data:new Date().toISOString(),
+        cliente:document.getElementById("cliente").value,
+        veiculo:document.getElementById("veiculo").value,
+        placa:document.getElementById("placa").value,
+        observacao:document.getElementById("obs").value,
+        total:document.getElementById("totalValue").textContent,
+        itens:Array.from(document.querySelectorAll("#quotationTable tbody tr")).map(row=>({
+            descricao:row.querySelector(".desc").value,
+            fornecedor:row.querySelector(".forn").value,
+            quantidade:row.querySelector(".quantity").value,
+            custo:row.querySelector(".cost").value,
+            precoVenda:row.querySelector(".price").value,
+            percVenda:row.querySelector(".percent").value,
+            percDesconto:row.querySelector(".discount").value
+        }))
+    };
+}
+function salvarCotacao(silencioso=false) {
+    const record=coletarCotacao(), arr=lerHistorico();
+    const idx=arr.findIndex(x=>x.numero===record.numero);
+    if(idx>=0) arr[idx]={...arr[idx],...record}; else arr.unshift(record);
+    try {localStorage.setItem(HIST_KEY,JSON.stringify(arr));}
+    catch(e){alert("Não foi possível salvar: armazenamento do navegador cheio ou indisponível.");return false;}
+    if(!silencioso) alert("Cotação "+record.numero+" salva. Você pode reabri-la no Histórico.");
+    if(document.getElementById("historicoPanel").style.display!=="none")renderHistorico();
+    return true;
+}
+function mostrarHistorico() {
+    const panel=document.getElementById("historicoPanel");
+    panel.style.display=panel.style.display==="none"?"block":"none";
+    if(panel.style.display==="block")renderHistorico();
+}
+function renderHistorico() {
+    const busca=document.getElementById("buscaCotacao").value.toLocaleLowerCase("pt-BR").trim();
+    const div=document.getElementById("listaHistorico");div.replaceChildren();
+    const arr=lerHistorico().filter(x=>[x.numero,x.cliente,x.veiculo,x.placa].some(v=>String(v||"").toLocaleLowerCase("pt-BR").includes(busca)));
+    if(!arr.length){div.textContent="Nenhuma cotação encontrada neste navegador.";return;}
+    arr.forEach(x=>{
+        const linha=document.createElement("div");
+        linha.style.cssText="padding:10px 0;border-bottom:1px solid #ddd;display:flex;gap:12px;align-items:center;flex-wrap:wrap";
+        const info=document.createElement("span");
+        info.textContent=[x.numero,x.cliente||"Sem cliente",x.veiculo||"",x.placa||"",x.data?new Date(x.data).toLocaleDateString("pt-BR"):"","R$ "+(x.total||"0")].join(" | ");
+        const abrir=document.createElement("button");abrir.textContent="Abrir / Editar";abrir.onclick=()=>abrirCotacao(x.numero);
+        const duplicar=document.createElement("button");duplicar.textContent="Duplicar";duplicar.onclick=()=>duplicarCotacao(x.numero);
+        linha.append(info,abrir,duplicar);div.append(linha);
+    });
+}
+function carregarCotacao(x) {
+    for(const [id,key] of [["cliente","cliente"],["veiculo","veiculo"],["placa","placa"],["obs","observacao"]])
+        document.getElementById(id).value=x[key]||"";
+    const tbody=document.querySelector("#quotationTable tbody");tbody.replaceChildren();
+    (x.itens&&x.itens.length?x.itens:[{}]).forEach(item=>{
+        addRow();const row=tbody.lastElementChild;
+        for(const [cls,key] of [["desc","descricao"],["forn","fornecedor"],["quantity","quantidade"],["cost","custo"],["percent","percVenda"],["discount","percDesconto"]])
+            row.querySelector("."+cls).value=item[key]??(cls==="quantity"?"1":"");
+        updatePrice(row.querySelector(".cost"));
+    });
+    calculateTotal();
+    localStorage.setItem("amigao_current_cot",x.numero);
+    updateMetaDisplay();
+    document.getElementById("historicoPanel").style.display="none";
+    window.scrollTo(0,0);
+}
+function abrirCotacao(numero) {
+    const x=lerHistorico().find(v=>v.numero===numero);if(!x)return;
+    if(!confirm("Abrir "+numero+"? Alterações não salvas na cotação atual serão descartadas."))return;
+    carregarCotacao(x);
+}
+function novaCotacao() {
+    if(!confirm("Iniciar nova cotação? Salve a cotação atual antes de continuar."))return;
+    localStorage.setItem("amigao_current_cot",getNextCotacaoNumber());
+    carregarCotacao({numero:localStorage.getItem("amigao_current_cot"),itens:[{}]});
+}
+function duplicarCotacao(numero) {
+    const x=lerHistorico().find(v=>v.numero===numero);if(!x)return;
+    if(!confirm("Duplicar "+numero+" em uma nova cotação?"))return;
+    const novo=getNextCotacaoNumber();carregarCotacao({...x,numero:novo});
+}
 /* Inicializa uma linha de exemplo: ajusta preço inicial (se custo preenchido) */
 document.addEventListener("DOMContentLoaded", () => {
     // pre-popular primeiro row preço se custo já tiver valor
