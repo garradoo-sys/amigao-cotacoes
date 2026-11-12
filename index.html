@@ -26,6 +26,35 @@
     .total { margin-top:16px; font-size:18px; font-weight:bold; }
     .meta { font-size:13px; color:#333; margin-top:6px; }
     .small-note { font-size:12px; color:#666; margin-top:6px; }
+
+:root{--red:#cf0909;--bg:#f3f5f8;--line:#e1e6ed;--ink:#263547}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{max-width:1400px;margin:0 auto;padding:22px 28px 40px;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif}
+.header-row{background:linear-gradient(110deg,#b90000,#ed1515);color:white;padding:23px 27px;border-radius:15px;box-shadow:0 7px 23px #9b00001d;align-items:center}
+.header-row h1{font-size:clamp(20px,2.2vw,28px)}.header-row .meta,.header-row .small-note{color:#ffe4e4;line-height:1.65}.company{max-width:100%}#logoPreview{display:none}
+.am-card{background:white;border:1px solid var(--line);border-radius:13px;padding:21px;margin-top:16px;box-shadow:0 3px 15px #142b4710}
+.am-eyebrow{font-size:11px;font-weight:800;letter-spacing:1px;color:#a24444;text-transform:uppercase;margin-bottom:5px}
+.am-card h2{font-size:17px;margin:0 0 16px;color:#293a4e}
+.am-card-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.am-card-top h2{margin-bottom:0}
+.am-logo{width:clamp(130px,20vw,230px);height:76px;object-fit:contain;object-position:center;border-radius:8px}
+.am-client-fields{display:flex;gap:13px}.am-client-fields>div{min-width:0}
+label.small{font-weight:700;color:#47576c;margin-bottom:7px}
+input[type=text],input[type=number],textarea{padding:10px;min-height:40px;border:1px solid #d5dce6;border-radius:8px;font:inherit;outline:none}
+input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}input[readonly]{background:#f3f5f8}textarea{min-height:90px;padding:12px}
+.am-table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
+#quotationTable{margin:0;min-width:1020px;border-collapse:collapse}
+#quotationTable th{background:#f5f6f9;color:#526075;border:0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:13px 8px}
+#quotationTable td{border:0;border-top:1px solid #e9edf2;padding:8px 6px}#quotationTable tbody tr:hover{background:#fff9f9}
+#quotationTable td input{min-width:55px}#quotationTable td:first-child input{min-width:180px}#quotationTable td:nth-child(2) input{min-width:125px}
+#quotationTable td button{background:#fff0f0;color:#c22;border:0;border-radius:7px;padding:10px 13px;cursor:pointer}
+.controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:0}.controls button{margin:0;padding:12px 15px;font-weight:700}.controls button:hover{filter:brightness(.94)}
+.controls button.pdf{background:#d80b0b}.controls button.save{background:#16834a}
+.am-add{background:#c90000;color:white;border:0;border-radius:8px;padding:11px 16px;font-weight:700;cursor:pointer;margin-top:14px}
+.am-total{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:20px 24px;border-radius:12px;background:#b90000;color:white}
+.am-total-label{font-size:12px;letter-spacing:.7px;font-weight:700}.am-total-value{font-size:clamp(24px,3vw,32px);font-weight:800}
+#historicoPanel{background:white;border-color:var(--line)!important;border-radius:12px!important}.am-note{margin:12px 3px;color:#66758a;font-size:12px}
+@media(max-width:760px){body{padding:12px}.header-row{padding:18px}.am-card{padding:15px}.am-client-fields{flex-direction:column}.am-client-fields>div{width:100%;flex:auto!important}.am-logo{width:145px;height:65px}.controls button{flex:1 1 145px}.am-total{padding:17px}}
+
 </style>
 </head>
 <body>
@@ -47,9 +76,10 @@
     </div>
 </div>
 
+<section class="am-card"><div class="am-card-top"><div><div class="am-eyebrow">01 / Identificação</div><h2>Dados do cliente e veículo</h2></div><img class="am-logo" src="amigao_logo_header.svg" alt="Logotipo Amigão"></div>
 <!-- Cliente / Veículo / Placa -->
 <div style="margin-top:12px;">
-    <div style="display:flex; gap:12px;">
+    <div class="am-client-fields">
         <div style="flex:2">
             <label class="small">Cliente</label>
             <input type="text" id="cliente" placeholder="Nome do cliente / empresa">
@@ -63,12 +93,8 @@
             <input type="text" id="placa" placeholder="Ex: ABC1D23">
         </div>
     </div>
-</div>
-
-<br>
-
-<label><b>Observação:</b></label>
-<textarea id="obs" placeholder="Observações que aparecerão no PDF"></textarea>
+</div></section>
+<section class="am-card"><div class="am-eyebrow">02 / Itens</div><h2>Produtos e serviços</h2><div class="am-table-scroll">
 
 <table id="quotationTable">
     <thead>
@@ -95,10 +121,11 @@
             <td><button onclick="removeRow(this)">X</button></td>
         </tr>
     </tbody>
-</table>
-
-<div class="controls">
-    <button id="addBtn" onclick="addRow()">Adicionar Linha</button>
+</table></div><button type="button" class="am-add" onclick="addRow()">+ Adicionar item</button></section>
+<section class="am-card"><div class="am-eyebrow">03 / Informações adicionais</div><h2>Observações do orçamento</h2><textarea id="obs" placeholder="Observações que aparecerão no PDF"></textarea></section>
+<div class="am-total"><span class="am-total-label">TOTAL DA COTAÇÃO</span><span class="am-total-value">R$ <span id="totalValue">0,00</span></span></div>
+<section class="am-card"><div class="am-eyebrow">04 / Ações</div><h2>Salvar, compartilhar e imprimir</h2><div class="controls">
+    
     <button class="pdf" onclick="generatePDF()">Gerar PDF Cliente</button>
     <button class="pdf" style="background:#263238" onclick="generatePDFOficina()">Gerar PDF Oficina</button>
     <button class="whatsapp" onclick="sendWhatsApp()">Enviar WhatsApp</button>
@@ -106,16 +133,12 @@
     <button onclick="novaCotacao()">Nova Cotação</button>
     <button onclick="mostrarHistorico()">Histórico / Editar</button>
     <button onclick="importarHistoricoLocal()">Enviar histórico local para nuvem</button>
-</div>
+</div></section>
 
 <section id="historicoPanel" style="display:none;margin-top:18px;padding:16px;border:1px solid #ccc;border-radius:8px"><h2>Histórico de cotações</h2><input id="buscaCotacao" type="text" placeholder="Pesquisar por número, cliente, veículo ou placa" oninput="renderHistorico()" style="max-width:600px"><div id="listaHistorico"></div></section>
-<div class="total">
-    Total: R$ <span id="totalValue">0,00</span>
-</div>
 
-<div class="small-note">
-    <em>Observação: desconto por item é em percentual (%) e aplicado sobre (PreçoVenda × Qtde).</em>
-</div>
+
+<div class="am-note">Desconto por item (%) aplicado sobre o preço de venda multiplicado pela quantidade.</div>
 
 <!-- jsPDF + AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
