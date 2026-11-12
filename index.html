@@ -55,6 +55,15 @@ input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}i
 #historicoPanel{background:white;border-color:var(--line)!important;border-radius:12px!important}.am-note{margin:12px 3px;color:#66758a;font-size:12px}
 @media(max-width:760px){body{padding:12px}.header-row{padding:18px}.am-card{padding:15px}.am-client-fields{flex-direction:column}.am-client-fields>div{width:100%;flex:auto!important}.am-logo{width:145px;height:65px}.controls button{flex:1 1 145px}.am-total{padding:17px}}
 
+
+/* Informações empresariais em destaque no cabeçalho */
+.header-row .am-header-details{font-size:14px;color:#fff;font-weight:600;line-height:1.5;margin-top:13px}
+.am-header-line{display:flex;gap:10px 22px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.am-header-line strong{color:#ffe66d;font-size:11px;letter-spacing:.65px;margin-right:6px}
+.am-header-contacts span{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px;background:#ffffff19;border:1px solid #ffffff45;border-radius:8px;padding:8px 12px}
+.header-row #cotacaoMeta{display:inline-block;margin-top:15px;padding:8px 12px;border-radius:8px;background:#7c00004a;border:1px solid #ffffff3b;color:#fff;font-size:13px;font-weight:800;letter-spacing:.2px}
+@media(max-width:760px){.header-row .am-header-details{font-size:13px}.am-header-line{gap:8px}.am-header-contacts span{width:100%}.header-row #cotacaoMeta{font-size:12px}}
+
 </style>
 </head>
 <body>
@@ -62,10 +71,10 @@ input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}i
 <div class="header-row">
     <div class="company">
         <h1>AMIGÃO PEÇAS ELÉTRICAS LTDA</h1>
-        <div class="meta">
-            CNPJ: 21.543.355/0001-05  •  I.E.: 083.075.26-7<br>
-            Rua Pedro Zangrande, 698 - Jardim Limoeiro - Serra/ES
-            Telefone:(27)3065-9999 Zap:(27)99818-5711
+        <div class="meta am-header-details">
+            <div class="am-header-line"><span><strong>CNPJ</strong> 21.543.355/0001-05</span><span><strong>I.E.</strong> 083.075.26-7</span></div>
+            <div class="am-header-line"><span><strong>ENDEREÇO</strong> Rua Pedro Zangrande, 698 — Jardim Limoeiro — Serra/ES</span></div>
+            <div class="am-header-line am-header-contacts"><span><strong>TELEFONE</strong> (27) 3065-9999</span><span><strong>WHATSAPP</strong> (27) 99818-5711</span></div>
         </div>
         <div class="small-note" id="cotacaoMeta"></div>
     </div>
