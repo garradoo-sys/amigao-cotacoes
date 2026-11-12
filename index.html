@@ -99,7 +99,8 @@
 
 <div class="controls">
     <button id="addBtn" onclick="addRow()">Adicionar Linha</button>
-    <button class="pdf" onclick="generatePDF()">Gerar PDF</button>
+    <button class="pdf" onclick="generatePDF()">Gerar PDF Cliente</button>
+    <button class="pdf" style="background:#263238" onclick="generatePDFOficina()">Gerar PDF Oficina</button>
     <button class="whatsapp" onclick="sendWhatsApp()">Enviar WhatsApp</button>
     <button class="save" onclick="salvarCotacao()">Salvar Cotação</button>
 </div>
@@ -313,6 +314,80 @@ function generatePDF() {
     // Atualiza sequência para próxima cotação
     localStorage.setItem("amigao_current_cot", getNextCotacaoNumber());
     updateMetaDisplay();
+}
+
+
+/* Relatório interno: custo, fornecedor, markup e margem bruta real após desconto. */
+function generatePDFOficina() {
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert("Biblioteca de PDF indisponível."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'pt',format:'a4',orientation:'landscape'});
+    if (typeof doc.autoTable !== 'function') { alert("Biblioteca de tabelas PDF indisponível."); return; }
+    const moeda = v => Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const pct = v => Number(v || 0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+    const value = (row,selector) => parseFloat(row.querySelector(selector).value) || 0;
+    const items = [];
+    let custoTotal=0, vendaTotal=0;
+    document.querySelectorAll("#quotationTable tbody tr").forEach(row => {
+        const desc = row.querySelector(".desc").value.trim();
+        const fornecedor = row.querySelector(".forn").value.trim();
+        const qty = Math.max(0,value(row,".quantity"));
+        const custo = Math.max(0,value(row,".cost"));
+        const preco = Math.max(0,value(row,".price"));
+        const desconto = Math.min(100,Math.max(0,value(row,".discount")));
+        if (!desc && !fornecedor && !custo && !preco) return;
+        const custoItem = custo*qty;
+        const vendaItem = preco*qty*(1-desconto/100);
+        const lucro = vendaItem-custoItem;
+        const margem = vendaItem>0 ? lucro/vendaItem*100 : 0;
+        const markup = custoItem>0 ? lucro/custoItem*100 : 0;
+        custoTotal += custoItem;
+        vendaTotal += vendaItem;
+        items.push([desc||"Sem descrição",fornecedor||"Não informado",String(qty),moeda(custo),moeda(custoItem),moeda(preco),pct(desconto),moeda(vendaItem),pct(markup),pct(margem),moeda(lucro)]);
+    });
+    if (!items.length) { alert("Adicione pelo menos um item à cotação."); return; }
+    const cotNum = localStorage.getItem("amigao_current_cot") || "SEM-NUMERO";
+    const cliente = document.getElementById("cliente").value.trim() || "Não informado";
+    const veiculo = document.getElementById("veiculo").value.trim() || "Não informado";
+    const placa = document.getElementById("placa").value.trim() || "Não informada";
+    doc.setFont("helvetica","bold"); doc.setFontSize(15);
+    doc.text("AMIGÃO PEÇAS ELÉTRICAS LTDA — RELATÓRIO INTERNO",32,35);
+    doc.setFontSize(9);doc.setTextColor(170,35,35);
+    doc.text("USO INTERNO — INFORMAÇÕES CONFIDENCIAIS — NÃO ENVIAR AO CLIENTE",32,51);
+    doc.setTextColor(0);doc.setFont("helvetica","normal");doc.setFontSize(9);
+    doc.text("Cotação: "+cotNum+"  |  Emissão: "+new Date().toLocaleString("pt-BR"),32,68);
+    doc.text("Cliente: "+cliente+"  |  Veículo: "+veiculo+"  |  Placa: "+placa,32,82,{maxWidth:775});
+    doc.autoTable({
+        startY:96,
+        head:[["Descrição","Fornecedor","Qtd","Custo un.","Custo total","Venda un.","Desc.","Venda líquida","Markup","Margem","Lucro bruto"]],
+        body:items,
+        theme:"grid",
+        margin:{left:25,right:25,bottom:38},
+        styles:{fontSize:7,cellPadding:4,overflow:"linebreak"},
+        headStyles:{fillColor:[38,50,56],textColor:255},
+        columnStyles:{0:{cellWidth:125},1:{cellWidth:95},2:{cellWidth:30}},
+        didDrawPage: data => {
+            const h=doc.internal.pageSize.getHeight();
+            doc.setFontSize(8);doc.setTextColor(110);
+            doc.text("RELATÓRIO CONFIDENCIAL — USO EXCLUSIVO DA OFICINA",25,h-20);
+            doc.text("Página "+doc.internal.getNumberOfPages(),doc.internal.pageSize.getWidth()-80,h-20);
+            doc.setTextColor(0);
+        }
+    });
+    const lucroTotal = vendaTotal-custoTotal;
+    const margemTotal = vendaTotal>0 ? lucroTotal/vendaTotal*100 : 0;
+    const markupTotal = custoTotal>0 ? lucroTotal/custoTotal*100 : 0;
+    let y=doc.lastAutoTable.finalY+18;
+    const h=doc.internal.pageSize.getHeight();
+    if (y>h-115) {doc.addPage();y=40;}
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("RESUMO FINANCEIRO",32,y);y+=18;
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    doc.text("Custo total: "+moeda(custoTotal)+"     Venda líquida: "+moeda(vendaTotal)+"     Lucro bruto: "+moeda(lucroTotal),32,y);y+=17;
+    doc.text("Markup efetivo sobre custo: "+pct(markupTotal)+"     Margem bruta sobre venda: "+pct(margemTotal),32,y);y+=17;
+    const obs=document.getElementById("obs").value.trim();
+    if(obs) {doc.setFontSize(9);const linhas=doc.splitTextToSize("Observações: "+obs,750);if(y+linhas.length*12>h-35){doc.addPage();y=40;}doc.text(linhas,32,y);}
+    doc.save(cotNum+"_oficina_interno.pdf");
 }
 
 /* ----------------------------
