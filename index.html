@@ -285,32 +285,48 @@ function generatePDF() {
     let cursorY = doc.lastAutoTable.finalY + 12;
 
     const obs = (document.getElementById("obs").value || "").trim();
-    if (obs) {
-        doc.setFontSize(11);
-        doc.text("Observação:", 40, cursorY);
-        cursorY += 14;
-        // quebrar linhas longas manualmente
-        const splitObs = doc.splitTextToSize(obs, pageWidth - 80);
-        doc.setFontSize(10);
-        doc.text(splitObs, 40, cursorY);
-        cursorY += (splitObs.length * 12) + 6;
+    const footerY = doc.internal.pageSize.getHeight() - 40;
+    function ensureSpace(height) {
+        if (cursorY + height > footerY - 15) {
+            doc.addPage();
+            cursorY = 45;
+        }
     }
-
+    if (obs) {
+        doc.setFontSize(10);
+        const splitObs = doc.splitTextToSize(obs, pageWidth - 80);
+        ensureSpace(22);
+        doc.setFont("helvetica","bold");
+        doc.text("Observação:", 40, cursorY);
+        cursorY += 16;
+        doc.setFont("helvetica","normal");
+        for (const line of splitObs) {
+            ensureSpace(14);
+            doc.text(line, 40, cursorY);
+            cursorY += 13;
+        }
+        cursorY += 8;
+    }
     if (descontoTotalAplicado > 0) {
+        ensureSpace(18);
         doc.setFontSize(11);
         doc.text(`Desconto Total Aplicado: R$ ${descontoTotalAplicado.toFixed(2)}`, 40, cursorY);
-        cursorY += 16;
+        cursorY += 18;
     }
-
+    ensureSpace(22);
     const total = parseFloat(document.getElementById("totalValue").textContent || "0").toFixed(2);
+    doc.setFont("helvetica","bold");
     doc.setFontSize(12);
     doc.text(`Total Geral: R$ ${total}`, 40, cursorY);
-
-    // Rodapé (opcional)
-    const footerY = doc.internal.pageSize.getHeight() - 40;
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text("Validade da cotação: 7 dias | Obrigado pela preferência.", 40, footerY);
+    doc.setFont("helvetica","normal");
+    const ultimaPagina = doc.internal.getNumberOfPages();
+    for(let pagina=1;pagina<=ultimaPagina;pagina++) {
+        doc.setPage(pagina);
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text("Validade da cotação: 7 dias | Obrigado pela preferência.", 40, footerY);
+    }
+    doc.setTextColor(0);
 
     // Salvar PDF - o nome inclui o número da cotação
     previewPDF(doc, `${cotNum}_cotacao.pdf`);
@@ -388,7 +404,7 @@ function generatePDFOficina() {
     doc.text("Custo total: "+moeda(custoTotal)+"     Venda líquida: "+moeda(vendaTotal)+"     Lucro bruto: "+moeda(lucroTotal),32,y);y+=17;
     doc.text("Markup efetivo sobre custo: "+pct(markupTotal)+"     Margem bruta sobre venda: "+pct(margemTotal),32,y);y+=17;
     const obs=document.getElementById("obs").value.trim();
-    if(obs) {doc.setFontSize(9);const linhas=doc.splitTextToSize("Observações: "+obs,750);if(y+linhas.length*12>h-35){doc.addPage();y=40;}doc.text(linhas,32,y);}
+    if(obs) {doc.setFontSize(9);const linhas=doc.splitTextToSize("Observações: "+obs,750);for(const linha of linhas){if(y+14>h-38){doc.addPage();y=40;}doc.text(linha,32,y);y+=12;}}
     previewPDF(doc, cotNum+"_oficina_interno.pdf");
 }
 
