@@ -456,14 +456,14 @@ async function importarHistoricoLocal() {
     const arr=lerHistorico();
     if(!arr.length){alert("Não há cotações locais neste navegador.");return;}
     if(!confirm("Importar "+arr.length+" cotações locais? Registros já existentes na nuvem não serão substituídos."))return;
-    let ok=0,erros=0;
+    let ok=0,erros=0;const detalhes=[];
     for(const x of arr) {
         if(!x.numero)continue;
         try {const ref=col.doc(x.numero);const doc=await ref.get();if(!doc.exists){await ref.set(x);ok++;}}
-        catch(e){erros++;console.error(e);}
+        catch(e){erros++;console.error(e);detalhes.push(x.numero+": "+(e.code||"erro")+" — "+e.message);}
     }
     await carregarHistoricoNuvem();
-    alert(ok+" cotações importadas; "+erros+" erros.");
+    alert(ok+" cotações importadas; "+erros+" erros."+ (detalhes.length?"\n\nDetalhes:\n"+detalhes.slice(0,5).join("\n"):""));
 }
 function historicoDisponivel() {
     if(historicoNuvem===null)return lerHistorico();
