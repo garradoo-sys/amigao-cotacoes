@@ -105,6 +105,7 @@
     <button class="save" onclick="salvarCotacao()">Salvar Cotação</button>
     <button onclick="novaCotacao()">Nova Cotação</button>
     <button onclick="mostrarHistorico()">Histórico / Editar</button>
+    <button onclick="importarHistoricoLocal()">Enviar histórico local para nuvem</button>
 </div>
 
 <section id="historicoPanel" style="display:none;margin-top:18px;padding:16px;border:1px solid #ccc;border-radius:8px"><h2>Histórico de cotações</h2><input id="buscaCotacao" type="text" placeholder="Pesquisar por número, cliente, veículo ou placa" oninput="renderHistorico()" style="max-width:600px"><div id="listaHistorico"></div></section>
@@ -430,6 +431,46 @@ function sendWhatsApp() {
    ---------------------------- */
 
 const HIST_KEY = "amigao_cotacoes_hist";
+let historicoNuvem = null;
+function colecaoCotacoes() {
+    if (typeof auth === "undefined" || !auth.currentUser || typeof db === "undefined") return null;
+    return db.collection("usuarios").doc(auth.currentUser.uid).collection("cotacoes");
+}
+function avisoNuvem(msg) {
+    let el=document.getElementById("statusNuvem");
+    if(!el) {el=document.createElement("div");el.id="statusNuvem";el.className="small-note";document.querySelector(".controls").after(el);}
+    el.textContent=msg;
+}
+async function carregarHistoricoNuvem() {
+    const col=colecaoCotacoes();
+    if(!col) return;
+    try {
+        const snap=await col.get();
+        historicoNuvem=snap.docs.map(d=>d.data()).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+        avisoNuvem("Histórico sincronizado com a nuvem ("+historicoNuvem.length+" cotações).");
+        if(document.getElementById("historicoPanel").style.display!=="none")renderHistorico();
+    } catch(e) {avisoNuvem("Erro na nuvem: "+e.message+". Histórico local disponível.");}
+}
+async function importarHistoricoLocal() {
+    const col=colecaoCotacoes();if(!col){alert("Faça login para importar.");return;}
+    const arr=lerHistorico();
+    if(!arr.length){alert("Não há cotações locais neste navegador.");return;}
+    if(!confirm("Importar "+arr.length+" cotações locais? Registros já existentes na nuvem não serão substituídos."))return;
+    let ok=0,erros=0;
+    for(const x of arr) {
+        if(!x.numero)continue;
+        try {const ref=col.doc(x.numero);const doc=await ref.get();if(!doc.exists){await ref.set(x);ok++;}}
+        catch(e){erros++;console.error(e);}
+    }
+    await carregarHistoricoNuvem();
+    alert(ok+" cotações importadas; "+erros+" erros.");
+}
+function historicoDisponivel() {
+    if(historicoNuvem===null)return lerHistorico();
+    const map=new Map(lerHistorico().map(x=>[x.numero,x]));
+    historicoNuvem.forEach(x=>map.set(x.numero,x));
+    return Array.from(map.values()).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+}
 function lerHistorico() {
     try { const arr=JSON.parse(localStorage.getItem(HIST_KEY)||"[]");return Array.isArray(arr)?arr:[]; }
     catch(e) { alert("Não foi possível ler o histórico salvo.");return []; }
@@ -454,13 +495,27 @@ function coletarCotacao() {
         }))
     };
 }
-function salvarCotacao(silencioso=false) {
+async function salvarCotacao(silencioso=false) {
     const record=coletarCotacao(), arr=lerHistorico();
     const idx=arr.findIndex(x=>x.numero===record.numero);
     if(idx>=0) arr[idx]={...arr[idx],...record}; else arr.unshift(record);
     try {localStorage.setItem(HIST_KEY,JSON.stringify(arr));}
     catch(e){alert("Não foi possível salvar: armazenamento do navegador cheio ou indisponível.");return false;}
-    if(!silencioso) alert("Cotação "+record.numero+" salva. Você pode reabri-la no Histórico.");
+    const col=colecaoCotacoes();
+    if(col) {
+        try {
+            await col.doc(record.numero).set(record);
+            if(historicoNuvem!==null) {
+                historicoNuvem=historicoNuvem.filter(x=>x.numero!==record.numero);
+                historicoNuvem.unshift(record);
+            }
+            avisoNuvem("Cotação "+record.numero+" salva na nuvem e neste navegador.");
+            if(!silencioso)alert("Cotação "+record.numero+" salva na nuvem.");
+        } catch(e) {
+            avisoNuvem("Falha na nuvem: "+e.message);
+            if(!silencioso)alert("Salva apenas neste navegador. Falha na nuvem: "+e.message);
+        }
+    } else if(!silencioso)alert("Cotação salva apenas neste navegador.");
     if(document.getElementById("historicoPanel").style.display!=="none")renderHistorico();
     return true;
 }
@@ -472,7 +527,7 @@ function mostrarHistorico() {
 function renderHistorico() {
     const busca=document.getElementById("buscaCotacao").value.toLocaleLowerCase("pt-BR").trim();
     const div=document.getElementById("listaHistorico");div.replaceChildren();
-    const arr=lerHistorico().filter(x=>[x.numero,x.cliente,x.veiculo,x.placa].some(v=>String(v||"").toLocaleLowerCase("pt-BR").includes(busca)));
+    const arr=historicoDisponivel().filter(x=>[x.numero,x.cliente,x.veiculo,x.placa].some(v=>String(v||"").toLocaleLowerCase("pt-BR").includes(busca)));
     if(!arr.length){div.textContent="Nenhuma cotação encontrada neste navegador.";return;}
     arr.forEach(x=>{
         const linha=document.createElement("div");
@@ -501,7 +556,7 @@ function carregarCotacao(x) {
     window.scrollTo(0,0);
 }
 function abrirCotacao(numero) {
-    const x=lerHistorico().find(v=>v.numero===numero);if(!x)return;
+    const x=historicoDisponivel().find(v=>v.numero===numero);if(!x)return;
     if(!confirm("Abrir "+numero+"? Alterações não salvas na cotação atual serão descartadas."))return;
     carregarCotacao(x);
 }
@@ -511,7 +566,7 @@ function novaCotacao() {
     carregarCotacao({numero:localStorage.getItem("amigao_current_cot"),itens:[{}]});
 }
 function duplicarCotacao(numero) {
-    const x=lerHistorico().find(v=>v.numero===numero);if(!x)return;
+    const x=historicoDisponivel().find(v=>v.numero===numero);if(!x)return;
     if(!confirm("Duplicar "+numero+" em uma nova cotação?"))return;
     const novo=getNextCotacaoNumber();carregarCotacao({...x,numero:novo});
 }
@@ -530,6 +585,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script src="firebase.js"></script>
 
@@ -537,6 +593,8 @@ document.addEventListener("DOMContentLoaded", () => {
 auth.onAuthStateChanged(user => {
   if (!user) {
     window.location.href = "login.html";
+  } else {
+    carregarHistoricoNuvem();
   }
 });
 </script>
