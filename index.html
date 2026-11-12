@@ -232,7 +232,7 @@ function calculateTotal() {
 /* ----------------------------
    GERAR PDF (melhor layout)
    ---------------------------- */
-function generatePDF() {
+async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'pt', format:'a4'}); // points unit for precise placement
 
@@ -264,18 +264,25 @@ function generatePDF() {
     doc.text(`Veículo: ${veiculo}`, 40, 114);
     doc.text(`Placa: ${placa}`, 40, 130);
 
-    // Adicionar logo à direita do cabeçalho (ajuste tamanho conforme necessário)
+    // Logomarca oficial PNG carregada do próprio repositório, sem depender de logoData.
     try {
-        // ajustar largura máxima do logo (pt), manter proporção
-        const logoMaxWidth = 140;
-        const imgProps = doc.getImageProperties(logoData);
-        const imgRatio = imgProps.width / imgProps.height;
-        const logoW = logoMaxWidth;
-        const logoH = logoW / imgRatio;
-        doc.addImage(logoData, 'PNG', pageWidth - logoW - 40, 28, logoW, logoH);
+        const logoUrl = "Logo%20Amig%C3%A3o%20com%20Carro%20Amarelo%282%29.png";
+        const img = new Image();
+        img.src = logoUrl;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        const logoPNG = canvas.toDataURL("image/png");
+        const logoW = 150;
+        const logoH = logoW * img.naturalHeight / img.naturalWidth;
+        // Abaixo dos dados do cabeçalho, alinhada à direita e sem sobrepor a cotação.
+        doc.addImage(logoPNG, "PNG", pageWidth - logoW - 40, 83, logoW, logoH);
     } catch (e) {
-        // Se falhar, simplesmente não adiciona a imagem
-        console.warn("Não foi possível inserir o logo no PDF:", e);
+        console.error("Falha ao carregar a logomarca no PDF Cliente:", e);
+        alert("Não foi possível carregar a logomarca para o PDF. Atualize a página e tente novamente.");
+        return;
     }
 
     // Montar dados da tabela para autoTable (não inclui fornecedor e desconto individual no PDF)
