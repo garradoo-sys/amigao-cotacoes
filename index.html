@@ -8564,32 +8564,27 @@ async function generatePDF() {
     doc.text(`Veículo: ${veiculo}`, 40, 114);
     doc.text(`Placa: ${placa}`, 40, 130);
 
-    // Converter o JPEG da marca em PNG por canvas antes de entregar ao jsPDF.
-    // O Safari pode não aceitar diretamente alguns JPEGs com metadados EXIF.
+    // Logomarca validada: não permitir prévia do PDF sem a marca.
     try {
-        const logoEl = document.getElementById("amigaoLogo");
-        const source = logoEl?.getAttribute("src") || window.AMIGAO_LOGO_DATA;
-        if (!source) throw new Error("Imagem não encontrada");
-        const logoImage = await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error("Falha ao decodificar JPEG"));
-            image.src = source;
-            if (image.complete && image.naturalWidth > 0) resolve(image);
+        const src = document.getElementById("amigaoLogo")?.getAttribute("src");
+        if (!src || !src.startsWith("data:image/")) throw Error("Logomarca não encontrada");
+        const img = await new Promise((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = () => reject(Error("Não foi possível ler a imagem"));
+            i.src = src;
         });
-        const canvas = document.createElement("canvas");
-        canvas.width = 600;
-        canvas.height = Math.max(1, Math.round(600 * logoImage.naturalHeight / logoImage.naturalWidth));
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas indisponível");
-        ctx.drawImage(logoImage, 0, 0, canvas.width, canvas.height);
-        const png = canvas.toDataURL("image/png");
-        const logoW = 164;
-        const logoH = logoW * canvas.height / canvas.width;
-        doc.addImage(png, "PNG", pageWidth - logoW - 40, 88, logoW, logoH, "amigao-logo");
+        const c = document.createElement("canvas");
+        c.width = 500;
+        c.height = Math.max(1, Math.round(500 * img.naturalHeight / img.naturalWidth));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        const png = c.toDataURL("image/png");
+        const logoW = 150, logoH = logoW * c.height / c.width;
+        doc.addImage(png, "PNG", pageWidth - logoW - 40, 85, logoW, logoH);
     } catch (e) {
-        console.error("Erro ao inserir logomarca no PDF Cliente:", e);
-        alert("Não foi possível inserir a logomarca no PDF: " + (e?.message || e));
+        console.error("Falha na logomarca do PDF Cliente", e);
+        alert("O PDF não foi gerado porque a logomarca falhou: " + e.message);
+        return;
     }
 
     // Montar dados da tabela para autoTable (não inclui fornecedor e desconto individual no PDF)
@@ -8613,7 +8608,7 @@ async function generatePDF() {
         body: body,
         startY: 215,
         styles: { fontSize: 10, cellPadding: 6 },
-        headStyles: { fillColor: [220,220,220], textColor: 0 },
+        headStyles: { fillColor: [188,12,12], textColor: 255 },
         theme: 'grid',
         margin: { left: 40, right: 40 }
     });
