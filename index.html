@@ -8570,9 +8570,10 @@ async function generatePDF() {
         if (!logoDataUrl || !logoDataUrl.startsWith("data:image/jpeg;base64,")) {
             throw new Error("Logomarca incorporada indisponível");
         }
-        const logoW = 150;
-        const logoH = logoW * 708 / 1170;
-        doc.addImage(logoDataUrl, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
+        // Cabeçalho reservado: a tabela não pode cobrir a imagem.
+        const logoW = 164;
+        const logoH = 100;
+        doc.addImage(logoDataUrl, "JPEG", pageWidth - logoW - 40, 87, logoW, logoH);
     } catch (e) {
         console.warn("Falha ao incluir logo no PDF Cliente:", e);
     }
@@ -8596,7 +8597,7 @@ async function generatePDF() {
     doc.autoTable({
         head: [['Descrição', 'Qtd', 'Preço Venda', 'Subtotal']],
         body: body,
-        startY: 150,
+        startY: 215,
         styles: { fontSize: 10, cellPadding: 6 },
         headStyles: { fillColor: [220,220,220], textColor: 0 },
         theme: 'grid',
