@@ -65,6 +65,13 @@ input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}i
 @media(max-width:760px){.header-row .am-header-details{font-size:13px}.am-header-line{gap:8px}.am-header-contacts span{width:100%}.header-row #cotacaoMeta{font-size:12px}}
 
 </style>
+<script src="logo-data.js?v=6332d952"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const logo = document.getElementById("amigaoLogo");
+    if (logo && window.AMIGAO_LOGO_DATA) logo.src = window.AMIGAO_LOGO_DATA;
+});
+</script>
 </head>
 <body>
 
@@ -85,7 +92,7 @@ input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}i
     </div>
 </div>
 
-<section class="am-card"><div class="am-card-top"><div><div class="am-eyebrow">01 / Identificação</div><h2>Dados do cliente e veículo</h2></div><img class="am-logo" src="IMG_9237.jpeg" alt="Logotipo Amigão"></div>
+<section class="am-card"><div class="am-card-top"><div><div class="am-eyebrow">01 / Identificação</div><h2>Dados do cliente e veículo</h2></div><img class="am-logo" id="amigaoLogo" src="IMG_9237.jpeg" alt="Logotipo Amigão"></div>
 <!-- Cliente / Veículo / Placa -->
 <div style="margin-top:12px;">
     <div class="am-client-fields">
@@ -273,37 +280,17 @@ async function generatePDF() {
     doc.text(`Veículo: ${veiculo}`, 40, 114);
     doc.text(`Placa: ${placa}`, 40, 130);
 
-    // Logomarca comemorativa: carregamento compatível com Safari/iOS.
-    // Não impedir a emissão do PDF caso a imagem falhe.
+    // Logomarca incorporada no próprio site: evita falha de caminho e cache no iPhone.
     try {
-        const logoUrl = new URL("IMG_9237.jpeg", document.baseURI).href;
-        const img = await new Promise((resolve, reject) => {
-            const existing = document.querySelector(".am-logo");
-            if (existing && existing.complete && existing.naturalWidth > 0) {
-                resolve(existing);
-                return;
-            }
-            const picture = new Image();
-            picture.onload = () => resolve(picture);
-            picture.onerror = () => reject(new Error("Não foi possível abrir " + logoUrl));
-            picture.src = logoUrl;
-            if (picture.complete && picture.naturalWidth > 0) resolve(picture);
-        });
-        const canvas = document.createElement("canvas");
-        // Dimensões reduzidas para evitar problemas de memória em navegadores móveis.
-        const targetWidth = Math.min(img.naturalWidth, 900);
-        canvas.width = targetWidth;
-        canvas.height = Math.max(1, Math.round(targetWidth * img.naturalHeight / img.naturalWidth));
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas indisponível");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const jpeg = canvas.toDataURL("image/jpeg", 0.88);
+        const logoDataUrl = window.AMIGAO_LOGO_DATA;
+        if (!logoDataUrl || !logoDataUrl.startsWith("data:image/jpeg;base64,")) {
+            throw new Error("Logomarca incorporada indisponível");
+        }
         const logoW = 150;
-        const logoH = logoW * img.naturalHeight / img.naturalWidth;
-        doc.addImage(jpeg, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
+        const logoH = logoW * 708 / 1170;
+        doc.addImage(logoDataUrl, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
     } catch (e) {
-        console.warn("Logomarca não incluída no PDF Cliente:", e);
-        // O PDF permanece disponível mesmo se a imagem não puder ser carregada.
+        console.warn("Falha ao incluir logo no PDF Cliente:", e);
     }
 
     // Montar dados da tabela para autoTable (não inclui fornecedor e desconto individual no PDF)
