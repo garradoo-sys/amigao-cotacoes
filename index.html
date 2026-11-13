@@ -273,25 +273,37 @@ async function generatePDF() {
     doc.text(`Veículo: ${veiculo}`, 40, 114);
     doc.text(`Placa: ${placa}`, 40, 130);
 
-    // Logomarca oficial PNG carregada do próprio repositório, sem depender de logoData.
+    // Logomarca comemorativa: carregamento compatível com Safari/iOS.
+    // Não impedir a emissão do PDF caso a imagem falhe.
     try {
-        const logoUrl = "IMG_9237.jpeg";
-        const img = new Image();
-        img.src = logoUrl;
-        await img.decode();
+        const logoUrl = new URL("IMG_9237.jpeg", document.baseURI).href;
+        const img = await new Promise((resolve, reject) => {
+            const existing = document.querySelector(".am-logo");
+            if (existing && existing.complete && existing.naturalWidth > 0) {
+                resolve(existing);
+                return;
+            }
+            const picture = new Image();
+            picture.onload = () => resolve(picture);
+            picture.onerror = () => reject(new Error("Não foi possível abrir " + logoUrl));
+            picture.src = logoUrl;
+            if (picture.complete && picture.naturalWidth > 0) resolve(picture);
+        });
         const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        canvas.getContext("2d").drawImage(img, 0, 0);
-        const logoPNG = canvas.toDataURL("image/jpeg", 0.94);
+        // Dimensões reduzidas para evitar problemas de memória em navegadores móveis.
+        const targetWidth = Math.min(img.naturalWidth, 900);
+        canvas.width = targetWidth;
+        canvas.height = Math.max(1, Math.round(targetWidth * img.naturalHeight / img.naturalWidth));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas indisponível");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const jpeg = canvas.toDataURL("image/jpeg", 0.88);
         const logoW = 150;
         const logoH = logoW * img.naturalHeight / img.naturalWidth;
-        // Abaixo dos dados do cabeçalho, alinhada à direita e sem sobrepor a cotação.
-        doc.addImage(logoPNG, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
+        doc.addImage(jpeg, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
     } catch (e) {
-        console.error("Falha ao carregar a logomarca no PDF Cliente:", e);
-        alert("Não foi possível carregar a logomarca para o PDF. Atualize a página e tente novamente.");
-        return;
+        console.warn("Logomarca não incluída no PDF Cliente:", e);
+        // O PDF permanece disponível mesmo se a imagem não puder ser carregada.
     }
 
     // Montar dados da tabela para autoTable (não inclui fornecedor e desconto individual no PDF)
