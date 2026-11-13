@@ -8546,7 +8546,7 @@ async function generatePDF() {
  }catch(e){alert("Erro na logomarca: "+e.message);return;}
  const band=(x,y,w,title)=>{doc.setFillColor(...red);doc.roundedRect(x,y,w,23,3,3,"F");doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(title,x+9,y+15);};
  doc.setFillColor(...red);doc.rect(0,0,W,113,"F");doc.setFillColor(255);doc.roundedRect(M,12,188,89,6,6,"F");
- try{const w=Math.min(173,76*ratio),h=w/ratio;doc.addImage(logo,"PNG",M+(188-w)/2,12+(89-h)/2,w,h);}catch(e){alert("Erro ao inserir a logo: "+e.message);return;}
+ try{const maxW=182,maxH=83;const w=Math.min(maxW,maxH*ratio),h=w/ratio;doc.addImage(logo,"PNG",M+(188-w)/2,12+(89-h)/2,w,h);}catch(e){alert("Erro ao inserir a logo: "+e.message);return;}
  doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(25);doc.text("ORÇAMENTO",W-M,64,{align:"right"});
  doc.setTextColor(39,48,61);doc.setFontSize(12);doc.text("AMIGÃO PEÇAS ELÉTRICAS LTDA",M,137);
  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
