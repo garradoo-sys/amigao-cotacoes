@@ -85,7 +85,7 @@ input:focus,textarea:focus{border-color:#db2525;box-shadow:0 0 0 3px #db25251b}i
     </div>
 </div>
 
-<section class="am-card"><div class="am-card-top"><div><div class="am-eyebrow">01 / Identificação</div><h2>Dados do cliente e veículo</h2></div><img class="am-logo" src="Logo%20Amig%C3%A3o%20com%20Carro%20Amarelo%282%29.png" alt="Logotipo Amigão"></div>
+<section class="am-card"><div class="am-card-top"><div><div class="am-eyebrow">01 / Identificação</div><h2>Dados do cliente e veículo</h2></div><img class="am-logo" src="IMG_9237.jpeg" alt="Logotipo Amigão"></div>
 <!-- Cliente / Veículo / Placa -->
 <div style="margin-top:12px;">
     <div class="am-client-fields">
@@ -275,7 +275,7 @@ async function generatePDF() {
 
     // Logomarca oficial PNG carregada do próprio repositório, sem depender de logoData.
     try {
-        const logoUrl = "Logo%20Amig%C3%A3o%20com%20Carro%20Amarelo%282%29.png";
+        const logoUrl = "IMG_9237.jpeg";
         const img = new Image();
         img.src = logoUrl;
         await img.decode();
@@ -283,11 +283,11 @@ async function generatePDF() {
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         canvas.getContext("2d").drawImage(img, 0, 0);
-        const logoPNG = canvas.toDataURL("image/png");
+        const logoPNG = canvas.toDataURL("image/jpeg", 0.94);
         const logoW = 150;
         const logoH = logoW * img.naturalHeight / img.naturalWidth;
         // Abaixo dos dados do cabeçalho, alinhada à direita e sem sobrepor a cotação.
-        doc.addImage(logoPNG, "PNG", pageWidth - logoW - 40, 83, logoW, logoH);
+        doc.addImage(logoPNG, "JPEG", pageWidth - logoW - 40, 83, logoW, logoH);
     } catch (e) {
         console.error("Falha ao carregar a logomarca no PDF Cliente:", e);
         alert("Não foi possível carregar a logomarca para o PDF. Atualize a página e tente novamente.");
