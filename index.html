@@ -8533,143 +8533,55 @@ function calculateTotal() {
    GERAR PDF (melhor layout)
    ---------------------------- */
 async function generatePDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'pt', format:'a4'}); // points unit for precise placement
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Cabeçalho institucional vermelho
-    doc.setFillColor(185,12,12); doc.rect(0,0,pageWidth,205,"F"); doc.setTextColor(255,255,255);
-    // Cabeçalho: empresa (esquerda) e logo (direita)
-    doc.setFontSize(12);
-    doc.text("AMIGÃO PEÇAS ELÉTRICAS LTDA", 40, 40);
-    doc.setFontSize(10);
-    doc.text("CNPJ: 21.543.355/0001-05  •  I.E.: 083.075.26-7", 40, 56);
-    doc.text("Rua Pedro Zangrande, 698 - Jardim Limoeiro - Serra/ES", 40, 72);
-
-    // Número da cotação e data + cliente info
-    const cotNum = localStorage.getItem("amigao_current_cot") || getNextCotacaoNumber();
-    const data = new Date();
-    const dataStr = data.toLocaleString();
-
-    doc.setFontSize(10);
-    doc.text(`Cotação Nº: ${cotNum}`, pageWidth - 200, 40);
-    doc.text(`Data: ${dataStr}`, pageWidth - 200, 56);
-
-    // Cliente / Veículo / Placa
-    const cliente = (document.getElementById("cliente").value || "").trim();
-    const veiculo = (document.getElementById("veiculo").value || "").trim();
-    const placa = (document.getElementById("placa").value || "").trim();
-
-    doc.setFontSize(11);
-    doc.setTextColor(35,48,65); doc.text(`Cliente: ${cliente}`, 40, 235);
-    doc.text(`Veículo: ${veiculo}`, 40, 254);
-    doc.text(`Placa: ${placa}`, 40, 273);
-
-    // Logomarca validada: não permitir prévia do PDF sem a marca.
-    try {
-        const src = document.getElementById("amigaoLogo")?.getAttribute("src");
-        if (!src || !src.startsWith("data:image/")) throw Error("Logomarca não encontrada");
-        const img = await new Promise((resolve, reject) => {
-            const i = new Image();
-            i.onload = () => resolve(i);
-            i.onerror = () => reject(Error("Não foi possível ler a imagem"));
-            i.src = src;
-        });
-        const c = document.createElement("canvas");
-        c.width = 500;
-        c.height = Math.max(1, Math.round(500 * img.naturalHeight / img.naturalWidth));
-        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-        const png = c.toDataURL("image/png");
-        const logoW = 150, logoH = logoW * c.height / c.width;
-        doc.setFillColor(255,255,255); doc.roundedRect(pageWidth-205,80,169,110,6,6,"F");
-        const w=Math.min(153,96*c.width/c.height), h=w*c.height/c.width;
-        doc.addImage(png,"PNG",pageWidth-205+(169-w)/2,80+(110-h)/2,w,h);
-    } catch (e) {
-        console.error("Falha na logomarca do PDF Cliente", e);
-        alert("O PDF não foi gerado porque a logomarca falhou: " + e.message);
-        return;
-    }
-
-    // Montar dados da tabela para autoTable (não inclui fornecedor e desconto individual no PDF)
-    const body = [];
-    let descontoTotalAplicado = 0;
-    document.querySelectorAll("#quotationTable tbody tr").forEach(row => {
-        const desc = row.querySelector(".desc").value || "";
-        const qty = parseFloat(row.querySelector(".quantity").value) || 0;
-        const price = parseFloat(row.querySelector(".price").value) || 0;
-        const discountPercent = parseFloat(row.querySelector(".discount").value) || 0;
-        const discountValue = (qty * price) * (discountPercent / 100);
-        descontoTotalAplicado += discountValue;
-        const subtotal = (qty * price) - discountValue;
-
-        body.push([desc, qty.toString(), "R$ " + price.toFixed(2), "R$ " + subtotal.toFixed(2)]);
-    });
-
-    // Desenhar tabela (autoTable)
-    doc.autoTable({
-        head: [['Descrição', 'Qtd', 'Preço Venda', 'Subtotal']],
-        body: body,
-        startY: 295,
-        styles: { fontSize: 10, cellPadding: 6 },
-        headStyles: { fillColor: [188,12,12], textColor: 255 },
-        theme: 'grid',
-        margin: { left: 40, right: 40 }
-    });
-
-    // Pós-tabela: Observação, Desconto Total (se houver), Total Geral
-    let cursorY = doc.lastAutoTable.finalY + 12;
-
-    const obs = (document.getElementById("obs").value || "").trim();
-    const footerY = doc.internal.pageSize.getHeight() - 40;
-    function ensureSpace(height) {
-        if (cursorY + height > footerY - 15) {
-            doc.addPage();
-            cursorY = 45;
-        }
-    }
-    if (obs) {
-        doc.setFontSize(10);
-        const splitObs = doc.splitTextToSize(obs, pageWidth - 80);
-        ensureSpace(22);
-        doc.setFont("helvetica","bold");
-        doc.text("Observação:", 40, cursorY);
-        cursorY += 16;
-        doc.setFont("helvetica","normal");
-        for (const line of splitObs) {
-            ensureSpace(14);
-            doc.text(line, 40, cursorY);
-            cursorY += 13;
-        }
-        cursorY += 8;
-    }
-    if (descontoTotalAplicado > 0) {
-        ensureSpace(18);
-        doc.setFontSize(11);
-        doc.text(`Desconto Total Aplicado: R$ ${descontoTotalAplicado.toFixed(2)}`, 40, cursorY);
-        cursorY += 18;
-    }
-    ensureSpace(22);
-    const total = parseFloat(document.getElementById("totalValue").textContent || "0").toFixed(2);
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(12);
-    doc.text(`Total Geral: R$ ${total}`, 40, cursorY);
-    doc.setFont("helvetica","normal");
-    const ultimaPagina = doc.internal.getNumberOfPages();
-    for(let pagina=1;pagina<=ultimaPagina;pagina++) {
-        doc.setPage(pagina);
-        doc.setFontSize(9);
-        doc.setTextColor(120);
-        doc.text("Validade da cotação: 7 dias | Obrigado pela preferência.", 40, footerY);
-    }
-    doc.setTextColor(0);
-
-    // Salvar PDF - o nome inclui o número da cotação
-    previewPDF(doc, `${cotNum}_cotacao.pdf`);
-
-    // A emissão de PDF não altera o número da cotação.
+ const jsPDF=window.jspdf?.jsPDF;if(!jsPDF){alert("Biblioteca PDF indisponível");return;}
+ const doc=new jsPDF({unit:"pt",format:"a4"}),W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight(),M=30;
+ if(!doc.autoTable){alert("Biblioteca de tabelas indisponível");return;}
+ const red=[185,12,18],money=n=>Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),field=id=>(document.getElementById(id)?.value||"").trim();
+ const num=localStorage.getItem("amigao_current_cot")||getNextCotacaoNumber(),now=new Date(),valid=new Date(now.getTime()+7*86400000);
+ let logo,ratio;
+ try {
+  const src=document.getElementById("amigaoLogo")?.getAttribute("src");if(!src?.startsWith("data:image/"))throw Error("Logo indisponível");
+  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(Error("Imagem inválida"));i.src=src;});
+  ratio=img.naturalWidth/img.naturalHeight;const c=document.createElement("canvas");c.width=480;c.height=Math.max(1,Math.round(480/ratio));c.getContext("2d").drawImage(img,0,0,c.width,c.height);logo=c.toDataURL("image/png");
+ }catch(e){alert("Erro na logomarca: "+e.message);return;}
+ const band=(x,y,w,title)=>{doc.setFillColor(...red);doc.roundedRect(x,y,w,23,3,3,"F");doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(title,x+9,y+15);};
+ doc.setFillColor(...red);doc.rect(0,0,W,113,"F");doc.setFillColor(255);doc.roundedRect(M,12,188,89,6,6,"F");
+ try{const w=Math.min(173,76*ratio),h=w/ratio;doc.addImage(logo,"PNG",M+(188-w)/2,12+(89-h)/2,w,h);}catch(e){alert("Erro ao inserir a logo: "+e.message);return;}
+ doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(25);doc.text("ORÇAMENTO",W-M,64,{align:"right"});
+ doc.setTextColor(39,48,61);doc.setFontSize(12);doc.text("AMIGÃO PEÇAS ELÉTRICAS LTDA",M,137);
+ doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+ doc.text("CNPJ: 21.543.355/0001-05  |  I.E.: 083.075.26-7",M,153);
+ doc.text("Rua Pedro Zangrande, 698 - Jardim Limoeiro - Serra/ES",M,168);
+ doc.text("Telefone: (27) 3065-9999  |  WhatsApp: (27) 99818-5711",M,183);
+ doc.setFont("helvetica","bold");doc.setTextColor(...red);doc.setFontSize(9);
+ doc.text("Nº: "+num,W-M,137,{align:"right"});doc.text("Data: "+now.toLocaleDateString("pt-BR"),W-M,154,{align:"right"});doc.text("Validade: "+valid.toLocaleDateString("pt-BR"),W-M,171,{align:"right"});
+ const half=(W-2*M-12)/2;band(M,204,half,"DADOS DO CLIENTE");band(M+half+12,204,half,"DADOS DO VEÍCULO");
+ doc.setTextColor(39,48,61);doc.setFont("helvetica","normal");doc.setFontSize(9);
+ doc.text(doc.splitTextToSize("Cliente: "+(field("cliente")||"—"),half-14),M+8,244);
+ doc.text(doc.splitTextToSize("Veículo: "+(field("veiculo")||"—"),half-14),M+half+20,244);
+ doc.text("Placa: "+(field("placa")||"—"),M+half+20,274);
+ let gross=0,discount=0;const body=[];
+ document.querySelectorAll("#quotationTable tbody tr").forEach(row=>{
+  const desc=fieldFrom(row,".desc"),qty=Math.max(0,parseFloat(fieldFrom(row,".quantity"))||0),price=Math.max(0,parseFloat(fieldFrom(row,".price"))||0),pct=Math.max(0,Math.min(100,parseFloat(fieldFrom(row,".discount"))||0));
+  if(!desc&&!price)return;const subtotal=qty*price,off=subtotal*pct/100;gross+=subtotal;discount+=off;
+  body.push([String(body.length+1).padStart(3,"0"),desc||"Item sem descrição",String(qty).replace(".",","),money(price),pct.toFixed(2).replace(".",",")+"%",money(subtotal-off)]);
+ });
+ function fieldFrom(row,selector){return(row.querySelector(selector)?.value||"").trim();}
+ if(!body.length){alert("Adicione itens ao orçamento.");return;}
+ doc.autoTable({startY:295,head:[["ITEM","DESCRIÇÃO","QTD","PREÇO UNIT.","DESC. %","TOTAL"]],body,theme:"grid",margin:{left:M,right:M,bottom:65},styles:{fontSize:8,cellPadding:6,lineColor:[218,224,230],lineWidth:.4},headStyles:{fillColor:red,textColor:255},alternateRowStyles:{fillColor:[247,248,250]},columnStyles:{0:{cellWidth:34},1:{cellWidth:"auto"},2:{cellWidth:36},3:{cellWidth:87},4:{cellWidth:59},5:{cellWidth:91}}});
+ let y=doc.lastAutoTable.finalY+17;if(y+130>H-65){doc.addPage();y=45;}
+ const lw=(W-2*M)*.53,gap=12,rx=M+lw+gap,rw=W-M-rx;
+ band(M,y,lw,"OBSERVAÇÕES");band(rx,y,rw,"RESUMO FINANCEIRO");
+ doc.setTextColor(42,52,65);doc.setFont("helvetica","normal");doc.setFontSize(9);
+ const obs=doc.splitTextToSize(field("obs")||"Orçamento válido por 7 dias.",lw-16);
+ doc.text(obs,M+8,y+41);
+ doc.text("Subtotal",rx+8,y+42);doc.text(money(gross),W-M-8,y+42,{align:"right"});
+ doc.text("Desconto",rx+8,y+62);doc.text(money(discount),W-M-8,y+62,{align:"right"});
+ doc.setFillColor(...red);doc.roundedRect(rx,y+74,rw,34,4,4,"F");
+ doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("TOTAL GERAL",rx+8,y+95);doc.text(money(gross-discount),W-M-8,y+95,{align:"right"});
+ const pages=doc.internal.getNumberOfPages();for(let p=1;p<=pages;p++){doc.setPage(p);doc.setDrawColor(225);doc.line(M,H-52,W-M,H-52);doc.setTextColor(100);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Amigão Peças e Serviços — Obrigado pela preferência!",M,H-37);doc.text(p+" / "+pages,W-M,H-37,{align:"right"});}
+ previewPDF(doc,num+"_cotacao.pdf");
 }
-
 
 /* Relatório interno: custo, fornecedor, markup e margem bruta real após desconto. */
 function generatePDFOficina() {
