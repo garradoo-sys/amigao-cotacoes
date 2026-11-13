@@ -8538,6 +8538,8 @@ async function generatePDF() {
 
     const pageWidth = doc.internal.pageSize.getWidth();
 
+    // Cabeçalho institucional vermelho
+    doc.setFillColor(185,12,12); doc.rect(0,0,pageWidth,205,"F"); doc.setTextColor(255,255,255);
     // Cabeçalho: empresa (esquerda) e logo (direita)
     doc.setFontSize(12);
     doc.text("AMIGÃO PEÇAS ELÉTRICAS LTDA", 40, 40);
@@ -8560,9 +8562,9 @@ async function generatePDF() {
     const placa = (document.getElementById("placa").value || "").trim();
 
     doc.setFontSize(11);
-    doc.text(`Cliente: ${cliente}`, 40, 98);
-    doc.text(`Veículo: ${veiculo}`, 40, 114);
-    doc.text(`Placa: ${placa}`, 40, 130);
+    doc.setTextColor(35,48,65); doc.text(`Cliente: ${cliente}`, 40, 235);
+    doc.text(`Veículo: ${veiculo}`, 40, 254);
+    doc.text(`Placa: ${placa}`, 40, 273);
 
     // Logomarca validada: não permitir prévia do PDF sem a marca.
     try {
@@ -8580,7 +8582,9 @@ async function generatePDF() {
         c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
         const png = c.toDataURL("image/png");
         const logoW = 150, logoH = logoW * c.height / c.width;
-        doc.addImage(png, "PNG", pageWidth - logoW - 40, 85, logoW, logoH);
+        doc.setFillColor(255,255,255); doc.roundedRect(pageWidth-205,80,169,110,6,6,"F");
+        const w=Math.min(153,96*c.width/c.height), h=w*c.height/c.width;
+        doc.addImage(png,"PNG",pageWidth-205+(169-w)/2,80+(110-h)/2,w,h);
     } catch (e) {
         console.error("Falha na logomarca do PDF Cliente", e);
         alert("O PDF não foi gerado porque a logomarca falhou: " + e.message);
@@ -8606,7 +8610,7 @@ async function generatePDF() {
     doc.autoTable({
         head: [['Descrição', 'Qtd', 'Preço Venda', 'Subtotal']],
         body: body,
-        startY: 215,
+        startY: 295,
         styles: { fontSize: 10, cellPadding: 6 },
         headStyles: { fillColor: [188,12,12], textColor: 255 },
         theme: 'grid',
